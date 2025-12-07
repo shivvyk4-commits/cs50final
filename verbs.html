@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Verbs: {{ category.name }} - Lango{% endblock %}
+
+{% block body %}
+<div class="lesson-page">
+    <header class="lesson-nav">
+        <a href="{{ url_for('lesson', category_id=category.id) }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Lesson</span>
+        </a>
+        <div class="lesson-title-small">
+            <span>{{ category.name }} - Verbs</span>
+        </div>
+    </header>
+
+    <div class="verbs-container">
+        <div class="progress-bar-top">
+            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-text-top">
+            <span id="current-verb">1</span> of <span>{{ verbs|length }}</span>
+        </div>
+
+        <div class="verb-card" id="verb-card">
+            <div class="verb-header">
+                <h2 id="verb-infinitive"></h2>
+                <p id="verb-meaning"></p>
+            </div>
+            
+            <div class="conjugation-table">
+                <h3>Present Tense Conjugations</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Pronoun</th>
+                            <th>Conjugation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Yo (I)</td>
+                            <td id="conj-yo"></td>
+                        </tr>
+                        <tr>
+                            <td>Tú (You)</td>
+                            <td id="conj-tu"></td>
+                        </tr>
+                        <tr>
+                            <td>Él/Ella (He/She)</td>
+                            <td id="conj-el"></td>
+                        </tr>
+                        <tr>
+                            <td>Nosotros (We)</td>
+                            <td id="conj-nosotros"></td>
+                        </tr>
+                        <tr>
+                            <td>Vosotros (You all)</td>
+                            <td id="conj-vosotros"></td>
+                        </tr>
+                        <tr>
+                            <td>Ellos/Ellas (They)</td>
+                            <td id="conj-ellos"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="verb-controls">
+            <button class="btn btn-secondary" id="prev-btn" disabled>
+                <i class="fas fa-arrow-left"></i> Previous
+            </button>
+            <button class="btn btn-primary" id="next-btn">
+                Next <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <form action="{{ url_for('complete_verbs', category_id=category.id) }}" method="POST" id="complete-form" style="display: none;">
+        <button type="submit" class="btn btn-success btn-large" id="complete-btn">
+            <i class="fas fa-check"></i> Mark as Complete
+        </button>
+    </form>
+</div>
+
+<script>
+const verbs = {{ verbs | tojson | safe if verbs else '[]' }};
+const verbData = verbs.map(v => ({
+    infinitive: v.infinitive,
+    meaning: v.english_meaning,
+    yo: v.yo,
+    tu: v.tu,
+    el: v.el_ella,
+    nosotros: v.nosotros,
+    vosotros: v.vosotros,
+    ellos: v.ellos
+}));
+
+let currentIndex = 0;
+
+const verbInfinitive = document.getElementById('verb-infinitive');
+const verbMeaning = document.getElementById('verb-meaning');
+const conjYo = document.getElementById('conj-yo');
+const conjTu = document.getElementById('conj-tu');
+const conjEl = document.getElementById('conj-el');
+const conjNosotros = document.getElementById('conj-nosotros');
+const conjVosotros = document.getElementById('conj-vosotros');
+const conjEllos = document.getElementById('conj-ellos');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+const progressFill = document.getElementById('progress-fill');
+const currentVerb = document.getElementById('current-verb');
+const completeForm = document.getElementById('complete-form');
+
+function updateVerb() {
+    const verb = verbData[currentIndex];
+    verbInfinitive.textContent = verb.infinitive;
+    verbMeaning.textContent = verb.meaning;
+    conjYo.textContent = verb.yo;
+    conjTu.textContent = verb.tu;
+    conjEl.textContent = verb.el;
+    conjNosotros.textContent = verb.nosotros;
+    conjVosotros.textContent = verb.vosotros;
+    conjEllos.textContent = verb.ellos;
+    
+    prevBtn.disabled = currentIndex === 0;
+    
+    const progress = ((currentIndex + 1) / verbData.length) * 100;
+    progressFill.style.width = progress + '%';
+    currentVerb.textContent = currentIndex + 1;
+    
+    if (currentIndex === verbData.length - 1) {
+        nextBtn.innerHTML = 'Finish <i class="fas fa-check"></i>';
+    } else {
+        nextBtn.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
+    }
+}
+
+prevBtn.addEventListener('click', () => {
+    if (currentIndex > 0) {
+        currentIndex--;
+        updateVerb();
+    }
+});
+
+nextBtn.addEventListener('click', () => {
+    if (currentIndex < verbData.length - 1) {
+        currentIndex++;
+        updateVerb();
+    } else {
+        completeForm.style.display = 'block';
+        nextBtn.style.display = 'none';
+    }
+});
+
+updateVerb();
+</script>
+{% endblock %}

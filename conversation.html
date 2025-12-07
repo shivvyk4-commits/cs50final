@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Conversation: {{ category.name }} - Lango{% endblock %}
+
+{% block body %}
+<div class="chat-page">
+    <header class="chat-header">
+        <a href="{{ url_for('lesson', category_id=category.id) }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="chat-title">
+            <h2>{{ category.name }} - Conversation Practice</h2>
+            <p>Practice using vocabulary and verbs you learned</p>
+            <div class="difficulty-badge difficulty-{{ difficulty_level }}">
+                <i class="fas fa-signal"></i>
+                {{ difficulty_name }}
+            </div>
+        </div>
+        <div class="session-stats">
+            {% if session.successful_responses or session.corrections_count %}
+            <div class="stat-mini">
+                <span class="stat-good">{{ session.successful_responses or 0 }}</span> correct |
+                <span class="stat-corrections">{{ session.corrections_count or 0 }}</span> corrections
+            </div>
+            {% endif %}
+        </div>
+        <form action="{{ url_for('complete_conversation', category_id=category.id) }}" method="POST">
+            <button type="submit" class="btn btn-success btn-small">
+                <i class="fas fa-check"></i> Complete
+            </button>
+        </form>
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-messages" id="chat-messages">
+            {% for message in messages %}
+            <div class="message {% if message.role == 'user' %}user{% else %}ai{% endif %}">
+                <div class="message-bubble">
+                    {{ message.content }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <form action="{{ url_for('send_message', category_id=category.id) }}" method="POST" class="chat-input-form" id="chat-form">
+            <div class="chat-input-container">
+                <button type="button" class="voice-input-btn" id="voice-btn" title="Click to speak">
+                    <i class="fas fa-microphone" id="voice-icon"></i>
+                </button>
+                <textarea 
+                    name="message" 
+                    id="message-input" 
+                    placeholder="Type or speak your response in Spanish..."
+                    required
+                    rows="2"
+                ></textarea>
+                <button type="submit" class="send-btn" id="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            <div class="voice-status" id="voice-status"></div>
+            <div class="input-hint">
+                <i class="fas fa-lightbulb"></i>
+                <span>Type or click the microphone to speak in Spanish!</span>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chat-messages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    const messageInput = document.getElementById('message-input');
+    const voiceBtn = document.getElementById('voice-btn');
+    const voiceIcon = document.getElementById('voice-icon');
+    const voiceStatus = document.getElementById('voice-status');
+    const chatForm = document.getElementById('chat-form');
+    
+    let isListening = false;
+    let recognition = null;
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const speechSupported = !!SpeechRecognition;
+    
+    if (speechSupported) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'es-ES';
+        recognition.interimResults = true;
+        recognition.continuous = false;
+        
+        recognition.onstart = function() {
+            isListening = true;
+            voiceBtn.classList.add('listening');
+            voiceIcon.className = 'fas fa-stop';
+            voiceStatus.textContent = 'Listening... speak now';
+            voiceStatus.className = 'voice-status listening';
+        };
+        
+        recognition.onend = function() {
+            isListening = false;
+            voiceBtn.classList.remove('listening');
+            voiceIcon.className = 'fas fa-microphone';
+            if (voiceStatus.textContent === 'Listening... speak now') {
+                voiceStatus.textContent = '';
+            }
+            voiceStatus.className = 'voice-status';
+        };
+        
+        recognition.onresult = function(event) {
+            let finalTranscript = '';
+            let interimTranscript = '';
+            
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript;
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+            
+            if (finalTranscript) {
+                messageInput.value = finalTranscript;
+                voiceStatus.textContent = 'Speech captured! Click send or edit your message.';
+                voiceStatus.className = 'voice-status success';
+            } else if (interimTranscript) {
+                messageInput.value = interimTranscript;
+                voiceStatus.textContent = 'Listening...';
+            }
+        };
+        
+        recognition.onerror = function(event) {
+            isListening = false;
+            voiceBtn.classList.remove('listening');
+            voiceIcon.className = 'fas fa-microphone';
+            
+            if (event.error === 'no-speech') {
+                voiceStatus.textContent = 'No speech detected. Try again.';
+            } else if (event.error === 'not-allowed') {
+                voiceStatus.textContent = 'Microphone access denied.';
+                voiceBtn.disabled = true;
+            } else {
+                voiceStatus.textContent = 'Error: ' + event.error;
+            }
+            voiceStatus.className = 'voice-status error';
+        };
+        
+        voiceBtn.addEventListener('click', function() {
+            if (isListening) {
+                recognition.stop();
+            } else {
+                voiceStatus.textContent = '';
+                voiceStatus.className = 'voice-status';
+                recognition.start();
+            }
+        });
+    } else {
+        voiceBtn.style.display = 'none';
+    }
+    
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.form.submit();
+        }
+    });
+});
+</script>
+{% endblock %}

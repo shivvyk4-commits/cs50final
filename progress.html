@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+
+{% block title %}Progress - Lango{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-language"></i>
+                <span>Lango</span>
+            </div>
+        </div>
+        
+        <div class="user-profile">
+            {% if current_user.profile_image_url %}
+            <img src="{{ current_user.profile_image_url }}" alt="Profile" class="profile-image">
+            {% else %}
+            <div class="profile-placeholder">
+                <i class="fas fa-user"></i>
+            </div>
+            {% endif %}
+            <div class="user-info">
+                <span class="user-name">{{ current_user.first_name or 'Learner' }}</span>
+                <span class="user-level">{{ current_user.experience_years }} years experience</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('schedule') }}" class="nav-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Schedule</span>
+            </a>
+            <a href="{{ url_for('progress') }}" class="nav-item active">
+                <i class="fas fa-chart-line"></i>
+                <span>Progress</span>
+            </a>
+            <a href="{{ url_for('review') }}" class="nav-item">
+                <i class="fas fa-brain"></i>
+                <span>Review</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{{ url_for('replit_auth.logout') }}" class="nav-item logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Log Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <h1>Your Progress</h1>
+            <p>Track your Spanish learning journey</p>
+        </header>
+
+        <div class="progress-container">
+            <div class="stats-grid">
+                <div class="big-stat-card">
+                    <div class="stat-icon fire">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="big-stat-value">{{ streak }}</span>
+                        <span class="stat-label">Day Streak</span>
+                    </div>
+                </div>
+                
+                <div class="big-stat-card">
+                    <div class="stat-icon vocab">
+                        <i class="fas fa-spell-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="big-stat-value">{{ learned_vocab }}</span>
+                        <span class="stat-label">Words Learned</span>
+                        <span class="stat-subtitle">of {{ total_vocab }} total</span>
+                    </div>
+                </div>
+                
+                <div class="big-stat-card">
+                    <div class="stat-icon lessons">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="big-stat-value">{{ completed_lessons }}</span>
+                        <span class="stat-label">Lessons Completed</span>
+                        <span class="stat-subtitle">of {{ total_lessons }} total</span>
+                    </div>
+                </div>
+                
+                <div class="big-stat-card">
+                    <div class="stat-icon conversations">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="big-stat-value">{{ conversation_count }}</span>
+                        <span class="stat-label">Conversations</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <div class="analytics-header">
+                        <h3><i class="fas fa-graduation-cap"></i> Vocabulary Mastery</h3>
+                    </div>
+                    {% if has_review_data %}
+                    <div class="mastery-chart-container">
+                        <canvas id="masteryChart"></canvas>
+                    </div>
+                    <div class="mastery-legend">
+                        <div class="legend-item">
+                            <span class="legend-dot new"></span>
+                            <span>New ({{ mastery_stats.new }})</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot learning"></span>
+                            <span>Learning ({{ mastery_stats.learning }})</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot reviewing"></span>
+                            <span>Reviewing ({{ mastery_stats.reviewing }})</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot mastered"></span>
+                            <span>Mastered ({{ mastery_stats.mastered }})</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-book-open"></i>
+                        <p>Complete a vocabulary lesson to see mastery data</p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-small btn-primary">Start Learning</a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="analytics-card">
+                    <div class="analytics-header">
+                        <h3><i class="fas fa-chart-bar"></i> 7-Day Activity</h3>
+                    </div>
+                    <div class="activity-chart-container">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fluency-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-microphone-alt"></i> Fluency Metrics</h2>
+                </div>
+                <div class="fluency-grid">
+                    <div class="fluency-card">
+                        <div class="fluency-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="fluency-stat">
+                            <span class="fluency-value">{{ total_practice_minutes }}</span>
+                            <span class="fluency-label">Minutes Practiced</span>
+                        </div>
+                    </div>
+                    <div class="fluency-card">
+                        <div class="fluency-icon">
+                            <i class="fas fa-comment-dots"></i>
+                        </div>
+                        <div class="fluency-stat">
+                            <span class="fluency-value">{{ total_messages }}</span>
+                            <span class="fluency-label">Messages Exchanged</span>
+                        </div>
+                    </div>
+                    <div class="fluency-card">
+                        <div class="fluency-icon">
+                            <i class="fas fa-user-edit"></i>
+                        </div>
+                        <div class="fluency-stat">
+                            <span class="fluency-value">{{ user_messages }}</span>
+                            <span class="fluency-label">Your Messages</span>
+                        </div>
+                    </div>
+                    <div class="fluency-card">
+                        <div class="fluency-icon">
+                            <i class="fas fa-chart-simple"></i>
+                        </div>
+                        <div class="fluency-stat">
+                            <span class="fluency-value">{{ avg_messages_per_session }}</span>
+                            <span class="fluency-label">Avg per Conversation</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-section">
+                <h2>Category Mastery</h2>
+                <div class="category-mastery-grid">
+                    {% for cat in category_mastery %}
+                    <div class="category-mastery-card">
+                        <div class="mastery-header">
+                            <h4>{{ cat.name }}</h4>
+                            <span class="mastery-percent">{{ cat.percent }}%</span>
+                        </div>
+                        <div class="mastery-bar">
+                            <div class="mastery-fill" style="width: {{ cat.percent }}%"></div>
+                        </div>
+                        <div class="mastery-detail">
+                            <span>{{ cat.mastered }} of {{ cat.total }} words mastered</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="progress-section">
+                <h2>Category Progress</h2>
+                <div class="category-progress-list">
+                    {% for category in categories %}
+                    {% set progress = progress_dict.get(category.id) %}
+                    <div class="category-progress-card">
+                        <div class="category-header">
+                            <div class="category-icon small">
+                                {% if category.icon == 'hand-wave' %}
+                                <i class="fas fa-hand-peace"></i>
+                                {% elif category.icon == 'utensils' %}
+                                <i class="fas fa-utensils"></i>
+                                {% elif category.icon == 'shirt' %}
+                                <i class="fas fa-tshirt"></i>
+                                {% elif category.icon == 'users' %}
+                                <i class="fas fa-users"></i>
+                                {% elif category.icon == 'futbol' %}
+                                <i class="fas fa-futbol"></i>
+                                {% elif category.icon == 'plane' %}
+                                <i class="fas fa-plane"></i>
+                                {% else %}
+                                <i class="fas fa-book"></i>
+                                {% endif %}
+                            </div>
+                            <h3>{{ category.name }}</h3>
+                        </div>
+                        
+                        <div class="progress-steps">
+                            <div class="progress-step-item {% if progress and progress.vocabulary_completed %}completed{% endif %}">
+                                <i class="fas {% if progress and progress.vocabulary_completed %}fa-check-circle{% else %}fa-circle{% endif %}"></i>
+                                <span>Vocabulary</span>
+                            </div>
+                            <div class="progress-step-item {% if progress and progress.verbs_completed %}completed{% endif %}">
+                                <i class="fas {% if progress and progress.verbs_completed %}fa-check-circle{% else %}fa-circle{% endif %}"></i>
+                                <span>Verbs</span>
+                            </div>
+                            <div class="progress-step-item {% if progress and progress.conversation_completed %}completed{% endif %}">
+                                <i class="fas {% if progress and progress.conversation_completed %}fa-check-circle{% else %}fa-circle{% endif %}"></i>
+                                <span>Conversation</span>
+                            </div>
+                        </div>
+                        
+                        <div class="category-progress-bar">
+                            {% if progress %}
+                            {% set completed_steps = (1 if progress.vocabulary_completed else 0) + (1 if progress.verbs_completed else 0) + (1 if progress.conversation_completed else 0) %}
+                            <div class="progress-fill" style="width: {{ (completed_steps / 3) * 100 }}%"></div>
+                            {% else %}
+                            <div class="progress-fill" style="width: 0%"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if has_review_data %}
+    const masteryCanvas = document.getElementById('masteryChart');
+    if (masteryCanvas) {
+        const masteryCtx = masteryCanvas.getContext('2d');
+        new Chart(masteryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['New', 'Learning', 'Reviewing', 'Mastered'],
+                datasets: [{
+                    data: [{{ mastery_stats.new }}, {{ mastery_stats.learning }}, {{ mastery_stats.reviewing }}, {{ mastery_stats.mastered }}],
+                    backgroundColor: [
+                        '#9ca3af',
+                        '#f59e0b',
+                        '#3b82f6',
+                        '#10b981'
+                    ],
+                    borderWidth: 0,
+                    spacing: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+
+    const activityCanvas = document.getElementById('activityChart');
+    if (activityCanvas) {
+        const activityCtx = activityCanvas.getContext('2d');
+        new Chart(activityCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for day in activity_data %}'{{ day.day }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                datasets: [
+                    {
+                        label: 'Reviews',
+                        data: [{% for day in activity_data %}{{ day.reviews }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                        backgroundColor: '#6366f1',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Conversations',
+                        data: [{% for day in activity_data %}{{ day.conversations }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        },
+                        grid: {
+                            color: '#f3f4f6'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 16
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

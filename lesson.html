@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.name }} - Lango{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-language"></i>
+                <span>Lango</span>
+            </div>
+        </div>
+        
+        <div class="user-profile">
+            {% if current_user.profile_image_url %}
+            <img src="{{ current_user.profile_image_url }}" alt="Profile" class="profile-image">
+            {% else %}
+            <div class="profile-placeholder">
+                <i class="fas fa-user"></i>
+            </div>
+            {% endif %}
+            <div class="user-info">
+                <span class="user-name">{{ current_user.first_name or 'Learner' }}</span>
+                <span class="user-level">{{ current_user.experience_years }} years experience</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('schedule') }}" class="nav-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Schedule</span>
+            </a>
+            <a href="{{ url_for('progress') }}" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Progress</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{{ url_for('replit_auth.logout') }}" class="nav-item logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Log Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <a href="{{ url_for('dashboard') }}" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Dashboard</span>
+            </a>
+        </header>
+
+        <div class="lesson-container">
+            <div class="lesson-header">
+                <div class="lesson-icon">
+                    {% if category.icon == 'hand-wave' %}
+                    <i class="fas fa-hand-peace"></i>
+                    {% elif category.icon == 'utensils' %}
+                    <i class="fas fa-utensils"></i>
+                    {% elif category.icon == 'shirt' %}
+                    <i class="fas fa-tshirt"></i>
+                    {% elif category.icon == 'users' %}
+                    <i class="fas fa-users"></i>
+                    {% elif category.icon == 'futbol' %}
+                    <i class="fas fa-futbol"></i>
+                    {% elif category.icon == 'plane' %}
+                    <i class="fas fa-plane"></i>
+                    {% else %}
+                    <i class="fas fa-book"></i>
+                    {% endif %}
+                </div>
+                <div class="lesson-title">
+                    <h1>{{ category.name }}</h1>
+                    <p>{{ category.description }}</p>
+                </div>
+            </div>
+
+            <div class="lesson-steps">
+                <a href="{{ url_for('vocabulary_lesson', category_id=category.id) }}" class="lesson-step {% if progress and progress.vocabulary_completed %}completed{% endif %}">
+                    <div class="step-number">
+                        {% if progress and progress.vocabulary_completed %}
+                        <i class="fas fa-check"></i>
+                        {% else %}
+                        1
+                        {% endif %}
+                    </div>
+                    <div class="step-content">
+                        <h3>Vocabulary</h3>
+                        <p>Learn {{ vocabulary|length }} essential words</p>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+
+                <a href="{{ url_for('verbs_lesson', category_id=category.id) }}" class="lesson-step {% if progress and progress.verbs_completed %}completed{% endif %}">
+                    <div class="step-number">
+                        {% if progress and progress.verbs_completed %}
+                        <i class="fas fa-check"></i>
+                        {% else %}
+                        2
+                        {% endif %}
+                    </div>
+                    <div class="step-content">
+                        <h3>Verbs</h3>
+                        <p>Master {{ verbs|length }} important verbs</p>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+
+                <a href="{{ url_for('conversation', category_id=category.id) }}" class="lesson-step {% if progress and progress.conversation_completed %}completed{% endif %}">
+                    <div class="step-number">
+                        {% if progress and progress.conversation_completed %}
+                        <i class="fas fa-check"></i>
+                        {% else %}
+                        3
+                        {% endif %}
+                    </div>
+                    <div class="step-content">
+                        <h3>Conversation Practice</h3>
+                        <p>Chat with AI tutor using what you learned</p>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+
+            {% if progress and progress.conversation_completed %}
+            <div class="lesson-complete-banner">
+                <i class="fas fa-trophy"></i>
+                <span>Congratulations! You've completed this lesson!</span>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+{% endblock %}

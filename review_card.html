@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Review: {{ review.vocabulary.spanish_word }} - Lango{% endblock %}
+
+{% block body %}
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="{{ url_for('dashboard') }}" class="logo">
+            <i class="fas fa-language"></i>
+            <span>Lango</span>
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="{{ url_for('schedule') }}"><i class="fas fa-calendar"></i> Schedule</a>
+            <a href="{{ url_for('review') }}" class="active"><i class="fas fa-brain"></i> Review</a>
+            <a href="{{ url_for('progress') }}"><i class="fas fa-chart-line"></i> Progress</a>
+        </div>
+        <div class="user-menu">
+            {% if current_user.profile_image_url %}
+            <img src="{{ current_user.profile_image_url }}" alt="Profile" class="profile-img">
+            {% else %}
+            <div class="profile-placeholder">
+                <i class="fas fa-user"></i>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<main class="main-content review-session">
+    <div class="review-progress-bar">
+        <a href="{{ url_for('review') }}" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Review
+        </a>
+        <span class="category-indicator">
+            <i class="fas fa-folder"></i> {{ review.vocabulary.category.name }}
+        </span>
+    </div>
+
+    <div class="flashcard-container">
+        <div class="flashcard" id="flashcard" onclick="flipCard()">
+            <div class="flashcard-inner" id="flashcard-inner">
+                <div class="flashcard-front">
+                    <div class="card-label">Spanish</div>
+                    <div class="card-word">{{ review.vocabulary.spanish_word }}</div>
+                    {% if review.vocabulary.pronunciation %}
+                    <div class="card-pronunciation">{{ review.vocabulary.pronunciation }}</div>
+                    {% endif %}
+                    <div class="card-hint">
+                        <i class="fas fa-hand-pointer"></i> Click to reveal answer
+                    </div>
+                </div>
+                <div class="flashcard-back">
+                    <div class="card-label">English</div>
+                    <div class="card-word">{{ review.vocabulary.english_word }}</div>
+                    {% if review.vocabulary.example_sentence %}
+                    <div class="card-example">
+                        <i class="fas fa-quote-left"></i> {{ review.vocabulary.example_sentence }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="rating-section" id="rating-section">
+            <h3>How well did you remember?</h3>
+            <div class="rating-buttons">
+                <form action="{{ url_for('rate_review', review_id=review.id) }}" method="POST" class="rating-form">
+                    <button type="submit" name="quality" value="0" class="rating-btn rating-forgot">
+                        <i class="fas fa-times-circle"></i>
+                        <span>Forgot</span>
+                        <small>Start over</small>
+                    </button>
+                    <button type="submit" name="quality" value="2" class="rating-btn rating-hard">
+                        <i class="fas fa-frown"></i>
+                        <span>Hard</span>
+                        <small>Difficult to recall</small>
+                    </button>
+                    <button type="submit" name="quality" value="3" class="rating-btn rating-good">
+                        <i class="fas fa-meh"></i>
+                        <span>Good</span>
+                        <small>Some hesitation</small>
+                    </button>
+                    <button type="submit" name="quality" value="4" class="rating-btn rating-easy">
+                        <i class="fas fa-smile"></i>
+                        <span>Easy</span>
+                        <small>Recalled quickly</small>
+                    </button>
+                    <button type="submit" name="quality" value="5" class="rating-btn rating-perfect">
+                        <i class="fas fa-star"></i>
+                        <span>Perfect</span>
+                        <small>Instant recall</small>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="review-info">
+            <div class="info-item">
+                <i class="fas fa-redo"></i>
+                <span>Reviews: {{ review.repetitions }}</span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-calendar"></i>
+                <span>Interval: {{ review.interval_days }} day{% if review.interval_days != 1 %}s{% endif %}</span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Ease: {{ "%.1f"|format(review.ease_factor) }}</span>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+function flipCard() {
+    const flashcard = document.getElementById('flashcard');
+    flashcard.classList.toggle('flipped');
+}
+</script>
+{% endblock %}

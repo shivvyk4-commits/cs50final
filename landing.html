@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Lango - Learn Spanish Through Conversation{% endblock %}
+
+{% block body %}
+<div class="landing-page">
+    <nav class="landing-nav">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-language"></i>
+                <span>Lango</span>
+            </div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="{{ url_for('replit_auth.login') }}" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Learn Spanish Through <span class="highlight">Real Conversations</span></h1>
+            <p class="hero-subtitle">Master Spanish with AI-powered conversations, structured lessons, and smart scheduling that fits your life.</p>
+            <div class="hero-cta">
+                <a href="{{ url_for('replit_auth.login') }}" class="btn btn-primary btn-large">Start Learning Free</a>
+                <p class="trust-text"><i class="fas fa-users"></i> Join thousands of learners</p>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="chat-preview">
+                <div class="chat-message ai">
+                    <span>¡Hola! ¿Cómo te llamas?</span>
+                </div>
+                <div class="chat-message user">
+                    <span>Me llamo Maria. Mucho gusto.</span>
+                </div>
+                <div class="chat-message ai">
+                    <span>¡Excelente! Nice to meet you too! 🎉</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="how-it-works" class="how-it-works">
+        <div class="section-container">
+            <h2>How It Works</h2>
+            <p class="section-subtitle">Three simple steps to fluency</p>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3>Set Your Schedule</h3>
+                    <p>Connect your Google Calendar and we'll find the perfect time for your daily lessons.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h3>Learn Vocabulary</h3>
+                    <p>Master essential words and verbs organized by real-life categories like food, travel, and family.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>Practice Conversations</h3>
+                    <p>Chat with our AI tutor who adapts to your level and guides you through real conversations.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="section-container">
+            <div class="feature-row">
+                <div class="feature-content">
+                    <h2>Smart Scheduling</h2>
+                    <p>Connect your Google Calendar and let Lango find the perfect time for your lessons. We'll schedule during reasonable hours (6 AM - 11 PM) when you're free.</p>
+                    <ul class="feature-list">
+                        <li><i class="fas fa-check"></i> Automatic scheduling around your busy life</li>
+                        <li><i class="fas fa-check"></i> Choose your preferred lesson duration</li>
+                        <li><i class="fas fa-check"></i> Manual time selection available</li>
+                    </ul>
+                </div>
+                <div class="feature-visual">
+                    <div class="calendar-preview">
+                        <div class="calendar-header">
+                            <i class="fas fa-calendar"></i>
+                            <span>Your Schedule</span>
+                        </div>
+                        <div class="calendar-event">
+                            <span class="event-time">10:00 AM</span>
+                            <span class="event-title">Spanish Lesson: Food</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-row reverse">
+                <div class="feature-content">
+                    <h2>AI-Powered Conversations</h2>
+                    <p>Practice speaking with our intelligent AI tutor. Get personalized feedback, corrections, and encouragement as you learn.</p>
+                    <ul class="feature-list">
+                        <li><i class="fas fa-check"></i> Context-aware responses based on your lesson</li>
+                        <li><i class="fas fa-check"></i> Gentle corrections with explanations</li>
+                        <li><i class="fas fa-check"></i> Real conversation scenarios</li>
+                    </ul>
+                </div>
+                <div class="feature-visual">
+                    <div class="ai-preview">
+                        <div class="ai-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <p>"Write a short paragraph about your favorite soccer player and why you like them."</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="section-container">
+            <h2>Ready to Start Speaking Spanish?</h2>
+            <p>Join Lango today and begin your journey to fluency.</p>
+            <a href="{{ url_for('replit_auth.login') }}" class="btn btn-primary btn-large">Get Started Free</a>
+            <p class="no-credit">No credit card required</p>
+        </div>
+    </section>
+
+    <footer class="landing-footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="logo">
+                    <i class="fas fa-language"></i>
+                    <span>Lango</span>
+                </div>
+                <p>Learn Spanish through real conversations.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+            </div>
+            <div class="footer-links">
+                <h4>Get Started</h4>
+                <a href="{{ url_for('replit_auth.login') }}">Sign Up</a>
+                <a href="{{ url_for('replit_auth.login') }}">Log In</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Lango. All rights reserved.</p>
+        </div>
+    </footer>
+</div>
+{% endblock %}

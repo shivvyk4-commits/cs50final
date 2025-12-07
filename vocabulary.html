@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+{% block title %}Vocabulary: {{ category.name }} - Lango{% endblock %}
+
+{% block body %}
+<div class="lesson-page">
+    <header class="lesson-nav">
+        <a href="{{ url_for('lesson', category_id=category.id) }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Lesson</span>
+        </a>
+        <div class="lesson-title-small">
+            <span>{{ category.name }} - Vocabulary</span>
+        </div>
+    </header>
+
+    <div class="flashcard-container">
+        <div class="progress-bar-top">
+            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-text-top">
+            <span id="current-card">1</span> of <span id="total-cards">{{ vocabulary|length }}</span>
+        </div>
+
+        <div class="flashcard-wrapper">
+            <div class="flashcard" id="flashcard">
+                <div class="flashcard-front">
+                    <span class="spanish-word" id="spanish-word"></span>
+                    <span class="pronunciation" id="pronunciation"></span>
+                </div>
+                <div class="flashcard-back">
+                    <span class="english-word" id="english-word"></span>
+                </div>
+            </div>
+        </div>
+
+        <p class="flip-hint">Click card to flip</p>
+
+        <div class="speech-practice-section">
+            <div class="speech-instruction">
+                <i class="fas fa-microphone"></i>
+                <span>Practice pronunciation - click the microphone and say the Spanish word</span>
+            </div>
+            <div class="speech-controls">
+                <button class="speech-btn" id="speech-btn" title="Click to practice pronunciation">
+                    <i class="fas fa-microphone" id="mic-icon"></i>
+                </button>
+                <div class="speech-status" id="speech-status">Click microphone to start</div>
+            </div>
+            <div class="speech-result" id="speech-result"></div>
+            <div class="speech-feedback" id="speech-feedback"></div>
+        </div>
+
+        <div class="flashcard-controls">
+            <button class="btn btn-secondary" id="prev-btn" disabled>
+                <i class="fas fa-arrow-left"></i> Previous
+            </button>
+            <button class="btn btn-primary" id="next-btn">
+                Next <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <form action="{{ url_for('complete_vocabulary', category_id=category.id) }}" method="POST" id="complete-form" style="display: none;">
+        <button type="submit" class="btn btn-success btn-large" id="complete-btn">
+            <i class="fas fa-check"></i> Mark as Complete
+        </button>
+    </form>
+</div>
+
+<script>
+(function() {
+    const vocabData = [
+        {% for v in vocabulary %}
+        {
+            spanish: "{{ v.spanish_word | e }}",
+            english: "{{ v.english_word | e }}",
+            pronunciation: "{{ v.pronunciation | e if v.pronunciation else '' }}"
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    if (vocabData.length === 0) {
+        const container = document.querySelector('.flashcard-container');
+        if (container) {
+            container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:40px;">No vocabulary items available for this category.</p>';
+        }
+        return;
+    }
+
+    let currentIndex = 0;
+    let isListening = false;
+    let recognition = null;
+
+    const flashcard = document.getElementById('flashcard');
+    const spanishWord = document.getElementById('spanish-word');
+    const englishWord = document.getElementById('english-word');
+    const pronunciation = document.getElementById('pronunciation');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const progressFill = document.getElementById('progress-fill');
+    const currentCard = document.getElementById('current-card');
+    const totalCards = document.getElementById('total-cards');
+    const completeForm = document.getElementById('complete-form');
+    const speechBtn = document.getElementById('speech-btn');
+    const micIcon = document.getElementById('mic-icon');
+    const speechStatus = document.getElementById('speech-status');
+    const speechResult = document.getElementById('speech-result');
+    const speechFeedback = document.getElementById('speech-feedback');
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const speechSupported = !!SpeechRecognition;
+
+    if (speechSupported && speechBtn) {
+    recognition = new SpeechRecognition();
+    recognition.lang = 'es-ES';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 3;
+    
+    recognition.onstart = function() {
+        isListening = true;
+        speechBtn.classList.add('listening');
+        micIcon.className = 'fas fa-stop';
+        speechStatus.textContent = 'Listening... speak now';
+        speechStatus.className = 'speech-status listening';
+        speechResult.textContent = '';
+        speechFeedback.textContent = '';
+        speechFeedback.className = 'speech-feedback';
+    };
+    
+    recognition.onend = function() {
+        isListening = false;
+        speechBtn.classList.remove('listening');
+        micIcon.className = 'fas fa-microphone';
+        if (speechStatus.textContent === 'Listening... speak now') {
+            speechStatus.textContent = 'Click microphone to try again';
+            speechStatus.className = 'speech-status';
+        }
+    };
+    
+    recognition.onresult = function(event) {
+        const results = event.results[0];
+        const transcript = results[0].transcript.toLowerCase().trim();
+        const targetWord = vocabData[currentIndex].spanish.toLowerCase().trim();
+        
+        speechResult.innerHTML = '<strong>You said:</strong> "' + transcript + '"';
+        
+        const allAlternatives = [];
+        for (let i = 0; i < results.length; i++) {
+            allAlternatives.push(results[i].transcript.toLowerCase().trim());
+        }
+        
+        const isMatch = allAlternatives.some(alt => 
+            alt === targetWord || 
+            normalizeSpanish(alt) === normalizeSpanish(targetWord) ||
+            calculateSimilarity(alt, targetWord) > 0.8
+        );
+        
+        if (isMatch) {
+            speechFeedback.innerHTML = '<i class="fas fa-check-circle"></i> Excellent pronunciation!';
+            speechFeedback.className = 'speech-feedback success';
+            speechStatus.textContent = 'Great job!';
+            speechStatus.className = 'speech-status success';
+        } else {
+            const similarity = calculateSimilarity(transcript, targetWord);
+            if (similarity > 0.6) {
+                speechFeedback.innerHTML = '<i class="fas fa-star-half-alt"></i> Good try! The word is: "' + vocabData[currentIndex].spanish + '"';
+                speechFeedback.className = 'speech-feedback partial';
+                speechStatus.textContent = 'Almost there! Try again';
+                speechStatus.className = 'speech-status';
+            } else {
+                speechFeedback.innerHTML = '<i class="fas fa-redo"></i> Try again! Say: "' + vocabData[currentIndex].spanish + '"';
+                speechFeedback.className = 'speech-feedback error';
+                speechStatus.textContent = 'Click microphone to try again';
+                speechStatus.className = 'speech-status';
+            }
+        }
+    };
+    
+    recognition.onerror = function(event) {
+        isListening = false;
+        speechBtn.classList.remove('listening');
+        micIcon.className = 'fas fa-microphone';
+        
+        if (event.error === 'no-speech') {
+            speechStatus.textContent = 'No speech detected. Try again';
+        } else if (event.error === 'not-allowed') {
+            speechStatus.textContent = 'Microphone access denied';
+            speechBtn.disabled = true;
+        } else {
+            speechStatus.textContent = 'Error: ' + event.error;
+        }
+        speechStatus.className = 'speech-status error';
+    };
+} else if (speechBtn && vocabData.length > 0) {
+    speechBtn.style.display = 'none';
+    if (speechStatus) {
+        speechStatus.textContent = 'Speech recognition not supported in this browser';
+        speechStatus.className = 'speech-status error';
+    }
+}
+
+function normalizeSpanish(text) {
+    return text
+        .replace(/á/g, 'a')
+        .replace(/é/g, 'e')
+        .replace(/í/g, 'i')
+        .replace(/ó/g, 'o')
+        .replace(/ú/g, 'u')
+        .replace(/ñ/g, 'n')
+        .replace(/ü/g, 'u')
+        .replace(/[^\w\s]/g, '')
+        .trim();
+}
+
+function calculateSimilarity(str1, str2) {
+    const s1 = normalizeSpanish(str1);
+    const s2 = normalizeSpanish(str2);
+    
+    if (s1 === s2) return 1;
+    if (s1.length === 0 || s2.length === 0) return 0;
+    
+    const matrix = [];
+    for (let i = 0; i <= s1.length; i++) {
+        matrix[i] = [i];
+    }
+    for (let j = 0; j <= s2.length; j++) {
+        matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= s1.length; i++) {
+        for (let j = 1; j <= s2.length; j++) {
+            if (s1[i-1] === s2[j-1]) {
+                matrix[i][j] = matrix[i-1][j-1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i-1][j-1] + 1,
+                    matrix[i][j-1] + 1,
+                    matrix[i-1][j] + 1
+                );
+            }
+        }
+    }
+    
+    const maxLen = Math.max(s1.length, s2.length);
+    return 1 - (matrix[s1.length][s2.length] / maxLen);
+}
+
+function toggleSpeech() {
+    if (!speechSupported || !recognition) return;
+    
+    if (isListening) {
+        recognition.stop();
+    } else {
+        if (speechResult) speechResult.textContent = '';
+        if (speechFeedback) {
+            speechFeedback.textContent = '';
+            speechFeedback.className = 'speech-feedback';
+        }
+        recognition.start();
+    }
+}
+
+if (speechBtn) {
+    speechBtn.addEventListener('click', toggleSpeech);
+}
+
+function updateCard() {
+    if (vocabData.length === 0) return;
+    
+    const vocab = vocabData[currentIndex];
+    if (spanishWord) spanishWord.textContent = vocab.spanish;
+    if (englishWord) englishWord.textContent = vocab.english;
+    if (pronunciation) pronunciation.textContent = vocab.pronunciation || '';
+    
+    if (flashcard) flashcard.classList.remove('flipped');
+    
+    if (speechResult) speechResult.textContent = '';
+    if (speechFeedback) {
+        speechFeedback.textContent = '';
+        speechFeedback.className = 'speech-feedback';
+    }
+    if (speechStatus) {
+        speechStatus.textContent = 'Click microphone to start';
+        speechStatus.className = 'speech-status';
+    }
+    
+    if (isListening && recognition) {
+        recognition.stop();
+    }
+    
+    if (prevBtn) prevBtn.disabled = currentIndex === 0;
+    
+    const progress = ((currentIndex + 1) / vocabData.length) * 100;
+    if (progressFill) progressFill.style.width = progress + '%';
+    if (currentCard) currentCard.textContent = currentIndex + 1;
+    
+    if (currentIndex === vocabData.length - 1) {
+        if (nextBtn) nextBtn.innerHTML = 'Finish <i class="fas fa-check"></i>';
+    } else {
+        if (nextBtn) nextBtn.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
+    }
+}
+
+if (flashcard) {
+    flashcard.addEventListener('click', () => {
+        flashcard.classList.toggle('flipped');
+    });
+}
+
+if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+        if (currentIndex > 0) {
+            currentIndex--;
+            updateCard();
+        }
+    });
+}
+
+if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+        if (currentIndex < vocabData.length - 1) {
+            currentIndex++;
+            updateCard();
+        } else {
+            if (completeForm) completeForm.style.display = 'block';
+            nextBtn.style.display = 'none';
+        }
+    });
+}
+
+    updateCard();
+})();
+</script>
+{% endblock %}

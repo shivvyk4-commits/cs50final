@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Setup Your Profile - Lango{% endblock %}
+
+{% block body %}
+<div class="onboarding-page">
+    <div class="onboarding-container">
+        <div class="onboarding-header">
+            <div class="logo">
+                <i class="fas fa-language"></i>
+                <span>Lango</span>
+            </div>
+            <div class="progress-indicator">
+                <div class="progress-step {% if step == '1' %}active{% elif step == '2' %}completed{% endif %}">
+                    <span class="step-number">1</span>
+                    <span class="step-label">Experience</span>
+                </div>
+                <div class="progress-line {% if step == '2' %}active{% endif %}"></div>
+                <div class="progress-step {% if step == '2' %}active{% endif %}">
+                    <span class="step-number">2</span>
+                    <span class="step-label">Schedule</span>
+                </div>
+            </div>
+        </div>
+
+        {% if step == '1' %}
+        <div class="onboarding-content">
+            <h1>Tell us about yourself</h1>
+            <p class="onboarding-subtitle">This helps us personalize your learning experience</p>
+            
+            <form method="POST" class="onboarding-form">
+                <div class="form-group">
+                    <label for="experience_years">How many years have you been learning Spanish?</label>
+                    <div class="slider-container">
+                        <input type="range" id="experience_years" name="experience_years" min="0" max="10" value="0" class="slider">
+                        <div class="slider-labels">
+                            <span>0 years (Beginner)</span>
+                            <span id="experience-display">0 years</span>
+                            <span>10+ years</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>How long do you want each lesson to be?</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="lesson_duration" value="15">
+                            <span class="radio-custom"></span>
+                            <span class="radio-label">15 minutes</span>
+                            <span class="radio-desc">Quick daily practice</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="lesson_duration" value="30" checked>
+                            <span class="radio-custom"></span>
+                            <span class="radio-label">30 minutes</span>
+                            <span class="radio-desc">Recommended</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="lesson_duration" value="45">
+                            <span class="radio-custom"></span>
+                            <span class="radio-label">45 minutes</span>
+                            <span class="radio-desc">Deeper learning</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="lesson_duration" value="60">
+                            <span class="radio-custom"></span>
+                            <span class="radio-label">60 minutes</span>
+                            <span class="radio-desc">Intensive study</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-large">Continue</button>
+            </form>
+        </div>
+        {% elif step == '2' %}
+        <div class="onboarding-content">
+            <h1>Set up your schedule</h1>
+            <p class="onboarding-subtitle">Choose how you want to schedule your lessons</p>
+            
+            <form method="POST" class="onboarding-form">
+                <div class="schedule-options">
+                    {% if calendar_connected %}
+                    <label class="schedule-option">
+                        <input type="radio" name="schedule_type" value="auto" checked>
+                        <div class="option-card">
+                            <div class="option-icon connected">
+                                <i class="fab fa-google"></i>
+                            </div>
+                            <div class="option-content">
+                                <h3>Use Google Calendar</h3>
+                                <p>We'll automatically find the best times in your calendar (between 6 AM - 11 PM)</p>
+                                <span class="connected-badge"><i class="fas fa-check-circle"></i> Connected</span>
+                            </div>
+                        </div>
+                    </label>
+                    {% else %}
+                    <div class="schedule-option disabled">
+                        <div class="option-card">
+                            <div class="option-icon">
+                                <i class="fab fa-google"></i>
+                            </div>
+                            <div class="option-content">
+                                <h3>Google Calendar</h3>
+                                <p>Connect your calendar to enable automatic scheduling</p>
+                                <span class="not-connected-badge"><i class="fas fa-times-circle"></i> Not Connected</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <label class="schedule-option">
+                        <input type="radio" name="schedule_type" value="manual" {% if not calendar_connected %}checked{% endif %}>
+                        <div class="option-card">
+                            <div class="option-icon manual">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="option-content">
+                                <h3>Choose my own time</h3>
+                                <p>Select your preferred time for daily lessons</p>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <div id="manual-time-picker" class="manual-time-picker" style="display: none;">
+                    <label for="preferred_time">What time works best for you?</label>
+                    <select name="preferred_time" id="preferred_time" class="form-select">
+                        <option value="06:00">6:00 AM</option>
+                        <option value="07:00">7:00 AM</option>
+                        <option value="08:00">8:00 AM</option>
+                        <option value="09:00">9:00 AM</option>
+                        <option value="10:00" selected>10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="13:00">1:00 PM</option>
+                        <option value="14:00">2:00 PM</option>
+                        <option value="15:00">3:00 PM</option>
+                        <option value="16:00">4:00 PM</option>
+                        <option value="17:00">5:00 PM</option>
+                        <option value="18:00">6:00 PM</option>
+                        <option value="19:00">7:00 PM</option>
+                        <option value="20:00">8:00 PM</option>
+                        <option value="21:00">9:00 PM</option>
+                        <option value="22:00">10:00 PM</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-large">Start Learning</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const slider = document.getElementById('experience_years');
+    const display = document.getElementById('experience-display');
+    
+    if (slider && display) {
+        slider.addEventListener('input', function() {
+            const value = this.value;
+            display.textContent = value + (value === '10' ? '+ years' : ' years');
+        });
+    }
+
+    const scheduleOptions = document.querySelectorAll('input[name="schedule_type"]');
+    const manualPicker = document.getElementById('manual-time-picker');
+    
+    scheduleOptions.forEach(option => {
+        option.addEventListener('change', function() {
+            if (this.value === 'manual') {
+                manualPicker.style.display = 'block';
+            } else {
+                manualPicker.style.display = 'none';
+            }
+        });
+    });
+
+    const checkedOption = document.querySelector('input[name="schedule_type"]:checked');
+    if (checkedOption && checkedOption.value === 'manual') {
+        manualPicker.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

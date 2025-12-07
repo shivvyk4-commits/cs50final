@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Lango{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-language"></i>
+                <span>Lango</span>
+            </div>
+        </div>
+        
+        <div class="user-profile">
+            {% if current_user.profile_image_url %}
+            <img src="{{ current_user.profile_image_url }}" alt="Profile" class="profile-image">
+            {% else %}
+            <div class="profile-placeholder">
+                <i class="fas fa-user"></i>
+            </div>
+            {% endif %}
+            <div class="user-info">
+                <span class="user-name">{{ current_user.first_name or 'Learner' }}</span>
+                <span class="user-level">{{ current_user.experience_years }} years experience</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard') }}" class="nav-item active">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('review') }}" class="nav-item">
+                <i class="fas fa-brain"></i>
+                <span>Review</span>
+            </a>
+            <a href="{{ url_for('schedule') }}" class="nav-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Schedule</span>
+            </a>
+            <a href="{{ url_for('progress') }}" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Progress</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{{ url_for('replit_auth.logout') }}" class="nav-item logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Log Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Welcome back, {{ current_user.first_name or 'Learner' }}!</h1>
+                <p>Ready to continue your Spanish journey?</p>
+            </div>
+            <div class="streak-badge">
+                <i class="fas fa-fire"></i>
+                <span>{{ streak }} day streak</span>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ completed_lessons }}</span>
+                        <span class="stat-label">Lessons Completed</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-spell-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ total_vocab }}</span>
+                        <span class="stat-label">Words Learned</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ streak }}</span>
+                        <span class="stat-label">Day Streak</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if upcoming_lessons %}
+            <div class="upcoming-section">
+                <h2>Upcoming Lessons</h2>
+                <div class="upcoming-list">
+                    {% for lesson in upcoming_lessons %}
+                    <div class="upcoming-card">
+                        <div class="upcoming-time">
+                            <span class="day">{{ lesson.scheduled_time.strftime('%a') }}</span>
+                            <span class="date">{{ lesson.scheduled_time.strftime('%d') }}</span>
+                        </div>
+                        <div class="upcoming-info">
+                            <h3>{{ lesson.category.name }}</h3>
+                            <p>{{ lesson.scheduled_time.strftime('%I:%M %p') }} - {{ lesson.duration_minutes }} min</p>
+                        </div>
+                        <a href="{{ url_for('lesson', category_id=lesson.category_id) }}" class="btn btn-primary btn-small">Start</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="categories-section">
+                <h2>Continue Learning</h2>
+                <div class="categories-grid">
+                    {% for category in categories %}
+                    {% set progress = progress_dict.get(category.id) %}
+                    <a href="{{ url_for('lesson', category_id=category.id) }}" class="category-card">
+                        <div class="category-icon">
+                            {% if category.icon == 'hand-wave' %}
+                            <i class="fas fa-hand-peace"></i>
+                            {% elif category.icon == 'utensils' %}
+                            <i class="fas fa-utensils"></i>
+                            {% elif category.icon == 'shirt' %}
+                            <i class="fas fa-tshirt"></i>
+                            {% elif category.icon == 'users' %}
+                            <i class="fas fa-users"></i>
+                            {% elif category.icon == 'futbol' %}
+                            <i class="fas fa-futbol"></i>
+                            {% elif category.icon == 'plane' %}
+                            <i class="fas fa-plane"></i>
+                            {% else %}
+                            <i class="fas fa-book"></i>
+                            {% endif %}
+                        </div>
+                        <div class="category-info">
+                            <h3>{{ category.name }}</h3>
+                            <p>{{ category.description }}</p>
+                        </div>
+                        <div class="category-progress">
+                            {% if progress %}
+                            <div class="progress-bar">
+                                {% set completed_steps = (1 if progress.vocabulary_completed else 0) + (1 if progress.verbs_completed else 0) + (1 if progress.conversation_completed else 0) %}
+                                <div class="progress-fill" style="width: {{ (completed_steps / 3) * 100 }}%"></div>
+                            </div>
+                            <span class="progress-text">{{ completed_steps }}/3 completed</span>
+                            {% else %}
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0%"></div>
+                            </div>
+                            <span class="progress-text">Not started</span>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

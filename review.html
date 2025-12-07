@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Vocabulary Review - Lango{% endblock %}
+
+{% block body %}
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="{{ url_for('dashboard') }}" class="logo">
+            <i class="fas fa-language"></i>
+            <span>Lango</span>
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="{{ url_for('schedule') }}"><i class="fas fa-calendar"></i> Schedule</a>
+            <a href="{{ url_for('review') }}" class="active"><i class="fas fa-brain"></i> Review</a>
+            <a href="{{ url_for('progress') }}"><i class="fas fa-chart-line"></i> Progress</a>
+        </div>
+        <div class="user-menu">
+            {% if current_user.profile_image_url %}
+            <img src="{{ current_user.profile_image_url }}" alt="Profile" class="profile-img">
+            {% else %}
+            <div class="profile-placeholder">
+                <i class="fas fa-user"></i>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<main class="main-content">
+    <div class="page-header">
+        <h1><i class="fas fa-brain"></i> Spaced Repetition Review</h1>
+        <p>Review vocabulary at optimal intervals for long-term retention</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">
+            <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="review-stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ due_reviews|length }}</h3>
+                <p>Due Today</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ total_reviews }}</h3>
+                <p>Total Words</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ mastered_count }}</h3>
+                <p>Mastered</p>
+            </div>
+        </div>
+    </div>
+
+    {% if due_reviews %}
+    <div class="review-section">
+        <div class="section-header">
+            <h2><i class="fas fa-tasks"></i> Words Due for Review</h2>
+            <a href="{{ url_for('review_card', review_id=due_reviews[0].id) }}" class="btn btn-primary">
+                <i class="fas fa-play"></i> Start Review Session
+            </a>
+        </div>
+
+        <div class="review-list">
+            {% for review in due_reviews %}
+            <div class="review-item">
+                <div class="review-word">
+                    <span class="spanish">{{ review.vocabulary.spanish_word }}</span>
+                    <span class="english">{{ review.vocabulary.english_word }}</span>
+                </div>
+                <div class="review-meta">
+                    <span class="category-badge">{{ review.vocabulary.category.name }}</span>
+                    <span class="repetitions">
+                        <i class="fas fa-redo"></i> {{ review.repetitions }} reviews
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h3>All caught up!</h3>
+        <p>You have no vocabulary words due for review right now. Complete more vocabulary lessons to add words to your review queue, or check back later.</p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+            <i class="fas fa-book-open"></i> Continue Learning
+        </a>
+    </div>
+    {% endif %}
+
+    <div class="info-section">
+        <h3><i class="fas fa-info-circle"></i> How Spaced Repetition Works</h3>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-icon"><i class="fas fa-calendar-check"></i></div>
+                <h4>Smart Scheduling</h4>
+                <p>Words are scheduled for review at increasing intervals based on how well you remember them.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon"><i class="fas fa-brain"></i></div>
+                <h4>Memory Optimization</h4>
+                <p>Review right before you're about to forget, strengthening long-term memory.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon"><i class="fas fa-chart-line"></i></div>
+                <h4>Track Progress</h4>
+                <p>Watch your vocabulary mastery grow as words move to longer intervals.</p>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

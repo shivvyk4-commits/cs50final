@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Reschedule Lesson - Lango{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-language"></i>
+                <span>Lango</span>
+            </div>
+        </div>
+        
+        <div class="user-profile">
+            {% if current_user.profile_image_url %}
+            <img src="{{ current_user.profile_image_url }}" alt="Profile" class="profile-image">
+            {% else %}
+            <div class="profile-placeholder">
+                <i class="fas fa-user"></i>
+            </div>
+            {% endif %}
+            <div class="user-info">
+                <span class="user-name">{{ current_user.first_name or 'Learner' }}</span>
+                <span class="user-level">{{ current_user.experience_years }} years experience</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('schedule') }}" class="nav-item active">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Schedule</span>
+            </a>
+            <a href="{{ url_for('progress') }}" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Progress</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{{ url_for('replit_auth.logout') }}" class="nav-item logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Log Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <a href="{{ url_for('schedule') }}" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to Schedule
+            </a>
+            <h1>Reschedule Lesson</h1>
+            <p>Choose a new time for your {{ lesson.category.name }} lesson</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash-message {{ category }}">
+            <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="reschedule-container">
+            <div class="current-schedule-card">
+                <h3>Current Schedule</h3>
+                <div class="schedule-details">
+                    <div class="detail-item">
+                        <i class="fas fa-book"></i>
+                        <span>{{ lesson.category.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ lesson.scheduled_time.strftime('%A, %B %d, %Y') }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-clock"></i>
+                        <span>{{ lesson.scheduled_time.strftime('%I:%M %p') }} ({{ lesson.duration_minutes }} minutes)</span>
+                    </div>
+                    {% if lesson.calendar_event_id and calendar_connected %}
+                    <div class="detail-item sync-status">
+                        <i class="fab fa-google"></i>
+                        <span>Synced with Google Calendar</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="new-schedule-card">
+                <h3>New Schedule</h3>
+                <form action="{{ url_for('reschedule_lesson', lesson_id=lesson.id) }}" method="POST" class="reschedule-form">
+                    <div class="form-group">
+                        <label>Scheduling Method</label>
+                        <div class="radio-group">
+                            {% if calendar_connected %}
+                            <label class="radio-option">
+                                <input type="radio" name="schedule_type" value="auto" checked>
+                                <div class="radio-content">
+                                    <i class="fas fa-magic"></i>
+                                    <div>
+                                        <strong>Auto-schedule</strong>
+                                        <p>Find the next available time slot</p>
+                                    </div>
+                                </div>
+                            </label>
+                            {% endif %}
+                            <label class="radio-option">
+                                <input type="radio" name="schedule_type" value="manual" {% if not calendar_connected %}checked{% endif %}>
+                                <div class="radio-content">
+                                    <i class="fas fa-calendar-day"></i>
+                                    <div>
+                                        <strong>Choose specific time</strong>
+                                        <p>Pick your preferred date and time</p>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="manual-fields" class="manual-fields" style="{% if calendar_connected %}display: none;{% endif %}">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="date">Date</label>
+                                <input type="date" name="date" id="date" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="time">Time</label>
+                                <select name="time" id="time" class="form-select">
+                                    <option value="06:00">6:00 AM</option>
+                                    <option value="07:00">7:00 AM</option>
+                                    <option value="08:00">8:00 AM</option>
+                                    <option value="09:00">9:00 AM</option>
+                                    <option value="10:00" selected>10:00 AM</option>
+                                    <option value="11:00">11:00 AM</option>
+                                    <option value="12:00">12:00 PM</option>
+                                    <option value="13:00">1:00 PM</option>
+                                    <option value="14:00">2:00 PM</option>
+                                    <option value="15:00">3:00 PM</option>
+                                    <option value="16:00">4:00 PM</option>
+                                    <option value="17:00">5:00 PM</option>
+                                    <option value="18:00">6:00 PM</option>
+                                    <option value="19:00">7:00 PM</option>
+                                    <option value="20:00">8:00 PM</option>
+                                    <option value="21:00">9:00 PM</option>
+                                    <option value="22:00">10:00 PM</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{{ url_for('schedule') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-calendar-check"></i> Reschedule Lesson
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const scheduleType = document.querySelectorAll('input[name="schedule_type"]');
+    const manualFields = document.getElementById('manual-fields');
+    
+    scheduleType.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'manual') {
+                manualFields.style.display = 'block';
+            } else {
+                manualFields.style.display = 'none';
+            }
+        });
+    });
+    
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today);
+        if (!dateInput.value) {
+            dateInput.value = today;
+        }
+    }
+});
+</script>
+{% endblock %}
